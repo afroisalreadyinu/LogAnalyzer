@@ -60,6 +60,9 @@ generateREs reChain logLines alreadyThere =
             unmatched = filter (not . (matchedByAll chains)) logLines
         in furtherREs ++ (generateREs reChain unmatched (alreadyThere ++ furtherREs))
 
+isChainSubset :: [REChain] -> [REChain] -> Bool
+isChainSubset s1 s2 = (Set.fromList s1) `Set.isSubsetOf` (Set.fromList s2)
+
 -- How many of a given list of lines a list of REChain's matches incompletely
 coverageOf :: [REChain] -> [String] -> Int
 coverageOf reChains logLines =

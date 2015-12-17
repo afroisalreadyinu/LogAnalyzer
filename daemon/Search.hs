@@ -51,6 +51,6 @@ aStarSearch reState heuristic =
         in case maybeNextNode of
              Nothing -> error "Empty priority queue in heuristicRESearch"
              Just (binding, restPsq) -> do
-                                putStrLn $ "Chains: " ++ (show . reNodeChains . currentRENode $ reState)
+                                putStrLn $ "Chains: " ++ (unlines . (map show) . reNodeChains . currentRENode $ reState)
                                 --putStrLn $ "Children: " ++ (show childrenVals)
                                 aStarSearch (reState { priorityQueue=restPsq, currentRENode=(PSQ.key binding) }) heuristic

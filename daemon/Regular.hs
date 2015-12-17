@@ -5,7 +5,7 @@ import qualified Data.IntMap.Strict as IntMap
 import qualified Data.String.Utils as SU
 import Data.List
 
-toBeEscaped = "\\/[]().{}?*+"
+toBeEscaped = "\\/[]().{}?*+|"
 
 escape :: String -> String
 escape s = foldl (\b a -> SU.replace [a] ("\\" ++ [a]) b) s toBeEscaped
@@ -17,7 +17,7 @@ data RE = LineStart |
           ConstChar Char |
           Parenthesis |
           Brackets |
-          HostName deriving Eq
+          HostName deriving (Eq, Ord)
 reToRegExp :: RE -> String
 reToRegExp LineStart = "^"
 reToRegExp Number = "\\d+"
@@ -32,10 +32,10 @@ costFuncRE :: RE -> Int
 costFuncRE LineStart = 0
 costFuncRE Number = 5
 costFuncRE Word = 5
-costFuncRE (ConstWord _) = 0
-costFuncRE (ConstChar _) = 0
-costFuncRE Parenthesis = 3
-costFuncRE Brackets = 3
+costFuncRE (ConstWord _) = 1
+costFuncRE (ConstChar _) = 1
+costFuncRE Parenthesis = 1
+costFuncRE Brackets = 1
 costFuncRE HostName = 1
 
 instance Show RE where
@@ -84,7 +84,7 @@ data REMatchCache = REMatchCache { rmcChain :: REChain,
 buildCache :: REChain -> [String] -> REMatchCache
 buildCache re logLines =
     REMatchCache re $ IntMap.fromList $ foldl collector [] $ zip [0..] logLines
-    where collector collected (index, line) = (index, length (chainMatchesS re line)):collected
+    where collector collected (index, line) = (index, if re == [LineStart] then 1 else (length (chainMatchesS re line))):collected
 
 isWord :: String -> Bool
 isWord x = x =~ "\\w*"

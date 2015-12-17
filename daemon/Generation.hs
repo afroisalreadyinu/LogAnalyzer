@@ -58,8 +58,9 @@ nextStates searchState =
         goodChains = filter (\x -> anyLineMatches x logLines) newChains
         chainCaches = map (flip buildCache $ logLines) goodChains
         goodCaches = filter uniquelyCovered  $ allSubsets chainCaches
+        betterCaches = filter (\x -> not $ (map rmcChain x) `isChainSubset` chains) goodCaches
         --goodSets = filter (nonOverlappingCover logLines) $ allSubsets goodChains
-    in map (\x -> RENode (map rmcChain x) (1 + (reNodeDepth node))) goodCaches
+    in map (\x -> RENode (map rmcChain x) (1 + (reNodeDepth node))) betterCaches
 
 
 isOverlapping :: REChain -> REChain -> [String] -> Bool

@@ -29,7 +29,5 @@ runTest :: IO ()
 runTest = do
   -- findComplements [LineStart, ConstWord "Program"]
   let res = makeNewREs moreComplicatedTestData
-      statate = startState {reLogLines=moreComplicatedTestData,
-                            possibleREs=res,
-                            currentRENode=otherNode}
+      statate = RESearchState moreComplicatedTestData (makeNewREs moreComplicatedTestData) (RENode [[LineStart]] 1) PSQ.empty
   putStrLn . unlines . (map showNode) $ nextStates statate

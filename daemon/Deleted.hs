@@ -40,3 +40,7 @@ findComplements :: REChain -> [REChain] -> [String] -> [[REChain]]
 findComplements chain reChains logLines =
     let compChains = filter (\x -> not $ isOverlapping chain x logLines) reChains
     in map (\x -> [chain, x]) compChains
+
+  compiled <- mapM (\x -> compile compBlank execBlank x) $ map reToRegExp res
+  let errors = zip res $ map getError compiled
+  putStrLn . unlines . (map showError) $ errors

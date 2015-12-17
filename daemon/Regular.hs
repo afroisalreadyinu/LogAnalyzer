@@ -2,19 +2,41 @@ module Regular where
 
 import Text.Regex.PCRE
 import qualified Data.IntMap.Strict as IntMap
+import qualified Data.String.Utils as SU
+import Data.List
 
-data RE = LineStart | Word | ConstWord String | Number deriving Eq
+toBeEscaped = "\\/[]().{}?*+"
+
+escape :: String -> String
+escape s = foldl (\b a -> SU.replace [a] ("\\" ++ [a]) b) s toBeEscaped
+
+data RE = LineStart |
+          Word |
+          ConstWord String |
+          Number |
+          ConstChar Char |
+          Parenthesis |
+          Brackets |
+          HostName deriving Eq
 reToRegExp :: RE -> String
 reToRegExp LineStart = "^"
 reToRegExp Number = "\\d+"
 reToRegExp Word = "[a-zA-Z]+"
-reToRegExp (ConstWord word) = word
+reToRegExp (ConstWord word) = escape word
+reToRegExp (ConstChar c) = escape [c]
+reToRegExp Parenthesis = "\\([^)]*\\)"
+reToRegExp Brackets = "\\[[^)]*\\]"
+reToRegExp HostName = "([\\w-_]+\\.)+([\\w-_]+)"
 
 costFuncRE :: RE -> Int
 costFuncRE LineStart = 0
 costFuncRE Number = 5
 costFuncRE Word = 5
-costFuncRE (ConstWord _) = 1
+costFuncRE (ConstWord _) = 0
+costFuncRE (ConstChar _) = 0
+costFuncRE Parenthesis = 3
+costFuncRE Brackets = 3
+costFuncRE HostName = 1
 
 instance Show RE where
     show = show . reToRegExp
@@ -34,8 +56,9 @@ findMatchingREs s =
 
 type REChain = [RE]
 toRegExp :: REChain -> String
+--toRegExp = concat . (intersperse "(\\s*)") . (map reToRegExp)
 toRegExp (LineStart:rest) = (reToRegExp LineStart) ++ (toRegExp rest)
-toRegExp rest = unwords . (map reToRegExp) $ rest --concat . (intersperse " *") . (map reToRegExp)
+toRegExp rest = unwords . (map reToRegExp) $ rest
 
 costFuncREChain :: REChain -> Int
 costFuncREChain = sum . (map costFuncRE)
@@ -62,3 +85,6 @@ buildCache :: REChain -> [String] -> REMatchCache
 buildCache re logLines =
     REMatchCache re $ IntMap.fromList $ foldl collector [] $ zip [0..] logLines
     where collector collected (index, line) = (index, length (chainMatchesS re line)):collected
+
+isWord :: String -> Bool
+isWord x = x =~ "\\w*"

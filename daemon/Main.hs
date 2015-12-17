@@ -13,24 +13,26 @@ import Generation
 import SearchTypes
 import TestData
 
-doHeuristicSearch :: IO [REChain]
-doHeuristicSearch = do
-  -- ll <- readFile filePath
-  -- let logLines = filter (not . (=~ "^\\s*$")) $ lines ll
-  let logLines = testData
+doHeuristicSearch :: String -> IO [REChain]
+doHeuristicSearch filePath = do
+  ll <- readFile filePath
+  let logLines = filter (not . (=~ "^\\s*$")) $ lines ll
       startNode = RENode [[LineStart]] 0
       startState = RESearchState logLines (makeNewREs logLines) startNode PSQ.empty
   aStarSearch startState simpleHeuristic
 
+doTest :: IO [REChain]
+doTest = do
+  let startNode = RENode [[LineStart]] 0
+      startState = RESearchState moreComplicatedTestData (makeNewREs moreComplicatedTestData) startNode PSQ.empty
+  aStarSearch startState simpleHeuristic
+
 main :: IO ()
 main = do
-  -- ll <- readFile "test-data.txt"
-  -- let logLines = lines ll
-  --     reChain = [LineStart, Word, Word, Word, Word, Word, Word, Word, Word, Word, Word, Word, Word, Word]
-
-  -- putStrLn . show $ improveRE reChain logLines
-  -- args <- getArgs
-  -- if (length args) < 1 then error "Usage: LogAnalyzer filename"
-  -- else do
-  reChain <- doHeuristicSearch
-  putStrLn . show $ reChain
+  args <- getArgs
+  if (length args) < 1 then do
+                         reChain <- doTest
+                         putStrLn . show $ reChain
+  else do
+    reChain <- doHeuristicSearch (args !! 0)
+    putStrLn . show $ reChain

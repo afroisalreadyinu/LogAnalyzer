@@ -74,8 +74,9 @@ lineCoverage reChains line =
          Nothing -> 0
          Just re -> length $ chainMatchesS re line
 
+defaultREs = (map ConstChar ":?/|.\\") ++ [Word, Number, Parenthesis, Brackets, HostName]
 
 makeNewREs :: [String] -> [RE]
 makeNewREs logLines =
-    let allWords = Set.fromList . words . unlines $ logLines
-    in [Word, Number] ++ (map ConstWord $ Set.toList allWords)
+    let allWords = Set.fromList . (filter isWord) . words . unlines $ logLines
+    in defaultREs ++ (map ConstWord $ Set.toList allWords)

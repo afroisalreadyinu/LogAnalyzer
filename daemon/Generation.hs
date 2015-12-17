@@ -21,15 +21,32 @@ chainSetIndependent chains logLines =
 nonOverlappingCover :: [String] -> [REChain] -> Bool
 nonOverlappingCover logLines chains = (chainSetCovers chains logLines) && (chainSetIndependent chains logLines)
 
-cachedChainSetCovers :: [REMatchCache] -> Bool
-cachedChainSetCovers matchCaches =
-    let composite = foldl1 (IntMap.unionWith (+)) $ map matchData matchCaches
-    in IntMap.foldl (\a b -> a && (b>0)) True composite
 
-cachedChainSetIndependent :: [REMatchCache] -> Bool
-cachedChainSetIndependent matchCaches =
-    let composite = foldl1 (IntMap.unionWith ??) $ map matchData matchCaches
-    in
+data CoverageStatus = NotCovered | Covered Int | DoubleCovered
+covStat :: Int -> CoverageStatus
+covStat x | x > 0 = Covered x
+          | otherwise = NotCovered
+
+getCoverageStat :: CoverageStatus -> CoverageStatus -> CoverageStatus
+getCoverageStat NotCovered c@(Covered _) = c
+getCoverageStat c@(Covered _) NotCovered = c
+getCoverageStat (Covered _) (Covered _) = DoubleCovered
+getCoverageStat DoubleCovered _ = DoubleCovered
+getCoverageStat _ DoubleCovered = DoubleCovered
+getCoverageStat NotCovered NotCovered = NotCovered
+
+
+isRighteous :: CoverageStatus -> Bool
+isRighteous (Covered a) = True
+isRighteous _ = False
+
+uniquelyCovered :: [REMatchCache] -> Bool
+uniquelyCovered matchCaches =
+    if null matchCaches then False else
+    let caches = map matchData matchCaches
+        covStats = map (IntMap.map covStat) caches
+        composite = foldl1 (IntMap.unionWith getCoverageStat) covStats
+    in IntMap.foldl (&&) True $ IntMap.map isRighteous composite
 
 nextStates :: RESearchState -> [RENode]
 nextStates searchState =
@@ -40,8 +57,10 @@ nextStates searchState =
         newChains = [chain ++ [re] | chain <- chains, re <- res] ++ chains
         goodChains = filter (\x -> anyLineMatches x logLines) newChains
         chainCaches = map (flip buildCache $ logLines) goodChains
-        goodSets = filter (nonOverlappingCover logLines) $ allSubsets goodChains
-    in map (\x -> RENode x (1 + (reNodeDepth node))) goodSets
+        goodCaches = filter uniquelyCovered  $ allSubsets chainCaches
+        --goodSets = filter (nonOverlappingCover logLines) $ allSubsets goodChains
+    in map (\x -> RENode (map rmcChain x) (1 + (reNodeDepth node))) goodCaches
+
 
 isOverlapping :: REChain -> REChain -> [String] -> Bool
 isOverlapping re other logLines =

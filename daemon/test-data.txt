@@ -1,0 +1,3 @@
+Program pid 234 name nginx failed with exception Do you know who I am
+Program pid 4592 name apache failed with exception This computer has too much memory
+Hologram blah yada

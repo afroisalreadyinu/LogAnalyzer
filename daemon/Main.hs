@@ -24,7 +24,7 @@ doHeuristicSearch filePath = do
 doTest :: IO [REChain]
 doTest = do
   let startNode = RENode [[LineStart]] 0
-      startState = RESearchState testData (makeNewREs testData) startNode PSQ.empty
+      startState = RESearchState moreComplicatedTestData (makeNewREs moreComplicatedTestData) startNode PSQ.empty
   aStarSearch startState simpleHeuristic
 
 main :: IO ()
